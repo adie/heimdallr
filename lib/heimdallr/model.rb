@@ -72,13 +72,24 @@ module Heimdallr
         self.heimdallr_relations ||= []
         self.heimdallr_relations  += methods.map(&:to_sym)
       end
+
+      def heimdallr_proxy_record_class
+        @heimdallr_proxy_record_class ||= Class.new(Heimdallr::Proxy::Record).tap do |klass|
+          klass.cattr_accessor :model_class, instance_accessor: false
+          klass.model_class = self
+
+          def klass.model_name
+            model_class.model_name
+          end
+        end
+      end
     end
 
     # Return a secure proxy object for this record.
     #
     # @return [Record::Proxy]
     def restrict(context, options={})
-      Proxy::Record.new(context, self, options)
+      self.class.heimdallr_proxy_record_class.new(context, self, options)
     end
 
     # @api private
@@ -94,10 +105,8 @@ module Heimdallr
       validates_with Heimdallr::Validator
     end
 
-    def self.included(klass)
-      klass.class_eval do
-        validate :heimdallr_validations
-      end
+    included do
+      validate :heimdallr_validations
     end
   end
 end

@@ -114,5 +114,11 @@ def run_specs(user_model, article_model, dont_save_model)
       }.to raise_error
     end
   end
+
+  describe "class methods" do
+    it "should delegate model_name to model class" do
+      article_model.first.restrict(@john).class.model_name.should == article_model.model_name
+    end
+  end
 end
 
